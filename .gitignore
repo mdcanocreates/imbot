@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+venv_sam/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Outputs
+outputs/
+outputs_sam/
+final_outputs/
+*.png
+*.jpg
+*.jpeg
+*.csv
+*.json
+*.html
+
+# SAM checkpoint (too large)
+*.pth
+sam_vit_b_01ec64.pth
+
+# Environment variables
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
