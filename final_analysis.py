@@ -348,13 +348,13 @@ It uses SAM-first segmentation for cells and classical methods for nuclei.
             print(f"Gemini QC summary saved to {qc_csv}")
     
     # Perform similarity analysis
-    if len(all_metrics) >= 2:
+    if len(metrics_clean) >= 2:
         print("\n" + "="*60)
         print("SIMILARITY ANALYSIS")
         print("="*60)
         
-        # Convert list of dicts to DataFrame
-        metrics_df = pd.DataFrame(all_metrics)
+        # Convert list of dicts to DataFrame (use cleaned metrics without Gemini QC)
+        metrics_df = pd.DataFrame(metrics_clean)
         
         # Define metric columns (exclude non-metric columns)
         # We'll use the core 6-7 metrics: area, circularity, aspect_ratio, 
