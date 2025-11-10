@@ -350,12 +350,13 @@ def sam_segment_cell(
                 # Get bounding box of largest component
                 min_row, min_col, max_row, max_col = largest_region.bbox
                 
-                # Expand bounding box by margin (80-120 pixels)
-                margin = min(box_margin, 120)
-                min_row = max(0, min_row - margin)
-                min_col = max(0, min_col - margin)
-                max_row = min(h, max_row + margin)
-                max_col = min(w, max_col + margin)
+                # Expand bounding box by margin (relaxed: 25% of image dimensions, up to 200 pixels)
+                margin_y = min(int(0.25 * h), 200)
+                margin_x = min(int(0.25 * w), 200)
+                min_row = max(0, min_row - margin_y)
+                min_col = max(0, min_col - margin_x)
+                max_row = min(h, max_row + margin_y)
+                max_col = min(w, max_col + margin_x)
                 
                 box = np.array([min_col, min_row, max_col, max_row])  # SAM expects (x1, y1, x2, y2)
                 
@@ -588,34 +589,46 @@ def sam_segment_cell(
                     largest = max(regions, key=lambda r: r.area)
                     best_mask = (labeled_mask == largest.label)
     
-    # Morphological smoothing
+    # Morphological smoothing (for smoothing, not shrinking)
     best_mask = binary_closing(best_mask, disk(5))
     best_mask = binary_opening(best_mask, disk(3))
     
     # Fill holes
     best_mask = ndimage.binary_fill_holes(best_mask)
     
-    # Optional: single erosion to avoid grabbing ambiguous periphery
-    from skimage.morphology import binary_erosion
-    best_mask = binary_erosion(best_mask, disk(1))
-    # Re-fill after erosion
+    # Gentle expansion to include more actin-rich periphery
+    from skimage.morphology import binary_dilation
+    best_mask = binary_dilation(best_mask, disk(10))  # radius ~10 pixels
+    
+    # AND with high-actin region to avoid grabbing dark background
+    if actin_gray is not None:
+        # Compute 30th percentile of actin intensity within the current mask
+        mask_pixels = actin_gray[best_mask]
+        if len(mask_pixels) > 0:
+            p30 = np.percentile(mask_pixels, 30)
+            # Build high-actin region
+            actin_high = actin_gray > p30
+            # Final mask: intersection of dilated mask and high-actin region
+            best_mask = best_mask & actin_high
+    
+    # Re-fill holes after dilation and AND operation
     best_mask = ndimage.binary_fill_holes(best_mask)
     
-    # Remove top/bottom pure-background bands explicitly
-    band_size = int(0.05 * h)  # 5% of image height
+    # Remove top/bottom pure-background bands (less aggressive)
+    band_size = int(0.03 * h)  # 3% of image height (reduced from 5%)
     if band_size > 0:
         # Check top band
         top_band_mask = best_mask[:band_size, :]
         top_band_ratio = np.sum(top_band_mask) / (band_size * w) if (band_size * w) > 0 else 0
         
-        if top_band_ratio > 0.2:  # More than 20% of mask in top band
+        if top_band_ratio > 0.4:  # More than 40% of mask in top band (increased from 20%)
             best_mask[:band_size, :] = False
         
         # Check bottom band
         bottom_band_mask = best_mask[-band_size:, :]
         bottom_band_ratio = np.sum(bottom_band_mask) / (band_size * w) if (band_size * w) > 0 else 0
         
-        if bottom_band_ratio > 0.2:  # More than 20% of mask in bottom band
+        if bottom_band_ratio > 0.4:  # More than 40% of mask in bottom band (increased from 20%)
             best_mask[-band_size:, :] = False
     
     return best_mask
