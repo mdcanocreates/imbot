@@ -521,7 +521,7 @@ python3 final_analysis.py --data-root img_model --output-root final_outputs
 
 ---
 
-**Report Generated**: November 2024  
+**Report Generated**: November 2025  
 **Pipeline Version**: Final Production (Model 2)  
 **Author**: imBot Development Team
 
