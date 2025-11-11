@@ -73,6 +73,17 @@ export SAM_CHECKPOINT_PATH="/path/to/sam_vit_b_01ec64.pth"
 
 ## Usage
 
+### Run Streamlit App (Recommended)
+
+The Streamlit app will automatically download the cell images from Dropbox on first run if `img_model/` doesn't exist:
+
+```bash
+source venv_sam/bin/activate
+streamlit run sam_refine_ui.py
+```
+
+The dataset will be automatically downloaded to `img_model/` if it's not already present. No manual download needed!
+
 ### Run Final Production Pipeline
 
 ```bash

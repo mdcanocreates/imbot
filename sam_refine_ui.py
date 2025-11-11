@@ -20,6 +20,7 @@ from image_analysis.io_utils import CELL_ID_TO_PREFIX
 from image_analysis.metrics import (
     compute_cell_area, compute_circularity, compute_aspect_ratio
 )
+from image_analysis.data_setup import ensure_data_available
 
 
 # Page config
@@ -84,6 +85,10 @@ def overlay_mask_on_image(image: np.ndarray, mask: np.ndarray, alpha: float = 0.
 # Main app
 st.title("🔬 Cell SAM Refinement & Analysis")
 
+# Ensure data is available (auto-download if needed)
+data_root_str = "img_model"
+data_status = ensure_data_available(data_root=data_root_str)
+
 # Check SAM checkpoint path
 import os
 sam_checkpoint_path = os.getenv('SAM_CHECKPOINT_PATH')
@@ -133,6 +138,16 @@ else:
     else:
         st.sidebar.error(f"⚠️ SAM checkpoint not found: {sam_checkpoint_path}")
 
+# Display data status in sidebar
+st.sidebar.markdown("---")
+if data_status == "exists":
+    st.sidebar.success(f"✅ Image dataset found in {data_root_str}/")
+elif data_status == "downloaded":
+    st.sidebar.success(f"⬇️ Downloaded dataset from Dropbox into {data_root_str}/")
+elif data_status.startswith("error:"):
+    st.sidebar.error(f"❌ {data_status}")
+    st.sidebar.info("Please ensure you have internet connection and try again.")
+
 # Create tabs
 tab1, tab2 = st.tabs(["Mask Refinement", "Analysis Summary"])
 
@@ -161,8 +176,8 @@ with tab1:
         with col2:
             save_btn = st.button("💾 Accept & Save")
     
-    # Data root
-    data_root = Path("img_model")
+    # Data root (use the same one from data_setup)
+    data_root = Path(data_root_str)
     output_root = Path("final_outputs")
     output_root.mkdir(parents=True, exist_ok=True)
     

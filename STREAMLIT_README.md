@@ -14,7 +14,11 @@ source venv_sam/bin/activate
 streamlit run sam_refine_ui.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+The app will:
+- **Automatically download** the cell images from Dropbox if `img_model/` doesn't exist
+- Open in your browser at `http://localhost:8501`
+
+No manual download needed! The dataset will be fetched automatically on first run.
 
 ## Features
 
