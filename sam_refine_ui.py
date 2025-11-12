@@ -151,55 +151,47 @@ elif data_status == "downloaded":
 elif data_status.startswith("error:"):
     st.sidebar.error(f"❌ {data_status}")
     st.sidebar.info("Please ensure you have internet connection and try again.")
-    
-    # Manual download button if auto-download failed
-    from image_analysis.data_setup import DATASET_URL
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**Manual Download**")
-    if st.sidebar.button("📥 Download from Dropbox", type="secondary"):
-        with st.spinner("Downloading dataset from Dropbox..."):
-            try:
-                manual_status = ensure_data_available(data_root=data_root_str)
-                if manual_status == "downloaded":
-                    st.sidebar.success("✅ Download complete!")
-                    st.rerun()  # Refresh to show new data
-                elif manual_status == "exists":
-                    st.sidebar.info("✅ Dataset already exists")
-                else:
-                    st.sidebar.error(f"❌ {manual_status}")
-            except Exception as e:
-                st.sidebar.error(f"❌ Download failed: {e}")
-    
-    # Show direct link
-    st.sidebar.markdown(f"[🔗 Direct Dropbox Link]({DATASET_URL})")
+
+# Always show manual download section
+from image_analysis.data_setup import DATASET_URL
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Manual Download**")
+
+# Determine button text based on data status
+if data_status == "exists":
+    button_text = "📥 Re-download from Dropbox"
+    button_help = "Re-download the dataset (will backup existing data)"
 else:
-    # Show manual download option even if data exists (for re-download)
-    from image_analysis.data_setup import DATASET_URL
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**Manual Download**")
-    if st.sidebar.button("📥 Re-download from Dropbox", type="secondary", help="Manually trigger download"):
-        with st.spinner("Downloading dataset from Dropbox..."):
-            try:
-                # Force re-download by temporarily removing the directory check
-                import shutil
-                data_path = Path(data_root_str)
-                if data_path.exists():
-                    backup_name = f"{data_root_str}_backup"
-                    if Path(backup_name).exists():
-                        shutil.rmtree(backup_name)
-                    shutil.move(data_root_str, backup_name)
-                
-                manual_status = ensure_data_available(data_root=data_root_str)
-                if manual_status == "downloaded":
-                    st.sidebar.success("✅ Download complete!")
-                    st.rerun()  # Refresh to show new data
-                else:
-                    st.sidebar.error(f"❌ {manual_status}")
-            except Exception as e:
-                st.sidebar.error(f"❌ Download failed: {e}")
-    
-    # Show direct link
-    st.sidebar.markdown(f"[🔗 Direct Dropbox Link]({DATASET_URL})")
+    button_text = "📥 Download from Dropbox"
+    button_help = "Manually download the dataset"
+
+if st.sidebar.button(button_text, type="secondary", help=button_help):
+    with st.spinner("Downloading dataset from Dropbox..."):
+        try:
+            # Force re-download by temporarily removing the directory check
+            import shutil
+            data_path = Path(data_root_str)
+            if data_path.exists() and data_status == "exists":
+                # Backup existing data before re-downloading
+                backup_name = f"{data_root_str}_backup"
+                if Path(backup_name).exists():
+                    shutil.rmtree(backup_name)
+                shutil.move(data_root_str, backup_name)
+                st.sidebar.info(f"📦 Backed up existing data to {backup_name}/")
+            
+            manual_status = ensure_data_available(data_root=data_root_str)
+            if manual_status == "downloaded":
+                st.sidebar.success("✅ Download complete!")
+                st.rerun()  # Refresh to show new data
+            elif manual_status == "exists":
+                st.sidebar.info("✅ Dataset already exists")
+            else:
+                st.sidebar.error(f"❌ {manual_status}")
+        except Exception as e:
+            st.sidebar.error(f"❌ Download failed: {e}")
+
+# Show direct link (always visible)
+st.sidebar.markdown(f"[🔗 Direct Dropbox Link]({DATASET_URL})")
 
 # Create tabs
 tab1, tab2 = st.tabs(["Mask Refinement", "Analysis Summary"])

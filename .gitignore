@@ -17,7 +17,7 @@ env/
 *.swp
 *.swo
 *~
-
+#GEMINI_API_KEY=AIzaSyC4yL8JpfDYt_NS7VCfGEX0ZJVvmOzFCc8
 # Outputs
 outputs/
 outputs_sam/
